@@ -24,7 +24,7 @@ HOMEWORK_VERDICTS = {
     'rejected': 'Работа проверена: у ревьюера есть замечания.',
 }
 
-LOG_FORMAT = f'%(asctime)s - [%(levelname)s] - %(message)s'
+LOG_FORMAT = '%(asctime)s - [%(levelname)s] - %(message)s'
 
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
@@ -80,9 +80,9 @@ def get_api_answer(timestamp):
         logger.error(error)
     else:
         if not isinstance(homework_status.json(), dict):
-            raise TypeError(f'Ответа API не приведен к типам данных Python.')
+            raise TypeError('Ответа API не приведен к типам данных Python.')
         else:
-            logger.debug(f'Ответа API приведен к типам данных Python.')
+            logger.debug('Ответа API приведен к типам данных Python.')
             return homework_status.json()
 
 
@@ -92,7 +92,7 @@ def check_response(response):
         if 'homeworks' in response:
             if 'current_date' in response:
                 if isinstance(response.get('homeworks'), list):
-                    logger.debug(f'Ответ API соответствует документации.')
+                    logger.debug('Ответ API соответствует документации.')
                     return response.get('homeworks')
                 raise TypeError('homeworks не соответсвует типу list.')
             raise KeyError('Не найден ключ: homeworks.')
