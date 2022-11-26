@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import time
 from http import HTTPStatus
 
@@ -27,7 +28,7 @@ HOMEWORK_VERDICTS = {
 LOG_FORMAT = '%(asctime)s - [%(levelname)s] - %(message)s'
 
 logger = logging.getLogger(__name__)
-handler = logging.StreamHandler()
+handler = logging.StreamHandler(stream=sys.stdout)
 logger.setLevel(logging.DEBUG)
 handler.setFormatter(logging.Formatter(LOG_FORMAT))
 logger.addHandler(handler)
