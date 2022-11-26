@@ -9,7 +9,7 @@ colorama==0.4.6
 flake8==3.9.2
 flake8-docstrings==1.6.0
 idna==3.4
-importlib-metadata==5.0.0
+importlib-metadata-4.13.0
 iniconfig==1.1.1
 mccabe==0.6.1
 packaging==21.3
