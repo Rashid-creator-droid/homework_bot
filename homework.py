@@ -126,13 +126,13 @@ def main():
     """Основная логика работы бота."""
     if check_tokens() is True:
         bot = telegram.Bot(token=TELEGRAM_TOKEN)
-        timestamp = int(time.time()) - RETRY_PERIOD
         error_0 = ''
         message_info = 'Бот начал отслеживание домашних работ...'
         logger.debug(message_info)
         send_message(bot, message_info)
         while True:
             try:
+                timestamp = int(time.time()) - RETRY_PERIOD
                 response = get_api_answer(timestamp)
                 homework = check_response(response)
                 if len(homework) > 0:
@@ -140,13 +140,13 @@ def main():
                     send_message(bot, message)
                 else:
                     logger.debug('Новых статусов нет!')
-                time.sleep(RETRY_PERIOD)
             except Exception as error:
                 message_error = f'Сбой в работе программы: {error}'
                 logger.error(message_error)
                 if str(error) != str(error_0):
                     send_message(bot, message_error)
                     error_0 = error
+            finally:
                 time.sleep(RETRY_PERIOD)
 
 
