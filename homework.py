@@ -77,7 +77,9 @@ def get_api_answer(timestamp):
         homework_json = homework_status.json()
         if not isinstance(homework_json, dict):
             raise TypeError('Ответа API не приведен к типам данных Python.')
-    except requests.RequestException as error:
+    except requests.exceptions.RequestException as error:
+        raise Exception(error)
+    except Exception as error:
         raise Exception(error)
     logger.debug('Возврат ответа API приведен к типам данныx Python.')
     return homework_json
