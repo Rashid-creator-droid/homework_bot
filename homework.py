@@ -28,9 +28,22 @@ HOMEWORK_VERDICTS = {
 logger = logging.getLogger(__name__)
 
 
-class CodeError(Exception):
-    def __init__(self, text):
-        self.txt = text
+class APICodeError(Exception):
+    """API response error."""
+
+    def __init__(self, *args):
+        """Text string."""
+        if args:
+            self.message = args[0]
+        else:
+            self.message = None
+
+    def __str__(self):
+        """Return text string."""
+        if self.message:
+            return f'APICodeError, код ошибки ответа {self.message}'
+        else:
+            return 'APICodeError: API response error'
 
 
 def check_tokens():
@@ -60,7 +73,7 @@ def get_api_answer(timestamp):
             params={'from_date': timestamp},
         )
         if homework_status.status_code != HTTPStatus.OK:
-            raise CodeError(f'Код ошибки ответа API {homework_status.status_code}.')
+            raise APICodeError(homework_status.status_code)
         homework_json = homework_status.json()
         if not isinstance(homework_json, dict):
             raise TypeError('Ответа API не приведен к типам данных Python.')
