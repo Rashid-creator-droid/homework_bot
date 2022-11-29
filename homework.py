@@ -28,22 +28,34 @@ HOMEWORK_VERDICTS = {
 logger = logging.getLogger(__name__)
 
 
-class APICodeError(Exception):
+class APIError(Exception):
     """API response error."""
 
-    def __init__(self, *args):
-        """Text string."""
-        if args:
-            self.message = args[0]
-        else:
-            self.message = None
+    pass
 
-    def __str__(self):
-        """Return text string."""
-        if self.message:
-            return f'APICodeError, код ошибки ответа {self.message}'
-        else:
-            return 'APICodeError: API response error'
+
+class APICodeError(Exception):
+    """API response code error."""
+
+    pass
+
+
+class APIConnectionError(Exception):
+    """API connection error."""
+
+    pass
+
+
+class TelegramMessageError(Exception):
+    """Telegram message error."""
+
+    pass
+
+
+class ParseStatusError(Exception):
+    """Parse status error."""
+
+    pass
 
 
 def check_tokens():
@@ -58,9 +70,9 @@ def send_message(bot, message):
             chat_id=TELEGRAM_CHAT_ID,
             text=message,
         )
-    except telegram.error.TelegramError:
+    except telegram.error.TelegramError as error:
         logger.error('Ошибка при отправке сообщения в телеграм')
-        raise telegram.error.TelegramError
+        raise TelegramMessageError(error)
     logger.debug('Сообщение успешно отправленно.')
 
 
@@ -73,14 +85,16 @@ def get_api_answer(timestamp):
             params={'from_date': timestamp},
         )
         if homework_status.status_code != HTTPStatus.OK:
-            raise APICodeError(homework_status.status_code)
+            raise APICodeError(
+                f'Код ошибки ответа API: {homework_status.status_code}'
+            )
         homework_json = homework_status.json()
         if not isinstance(homework_json, dict):
-            raise TypeError('Ответа API не приведен к типам данных Python.')
+            raise TypeError('Ответ API не приведен к типам данных Python.')
     except requests.exceptions.RequestException as error:
-        raise Exception(error)
+        raise APIConnectionError(error)
     except Exception as error:
-        raise Exception(error)
+        raise APIError(error)
     logger.debug('Возврат ответа API приведен к типам данныx Python.')
     return homework_json
 
@@ -110,7 +124,7 @@ def parse_status(homework):
     homework_name = homework.get('homework_name')
     status = homework.get('status')
     if status not in HOMEWORK_VERDICTS:
-        raise Exception('Неожиданный статус домашней работы.')
+        raise ParseStatusError('Неожиданный статус домашней работы.')
     verdict = HOMEWORK_VERDICTS.get(status)
     logger.debug(f'Статус работы {verdict}')
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
@@ -125,17 +139,19 @@ def main():
         )
         raise SystemExit('Отсутствуют необходимые токены.')
     logger.debug('Все токены на месте!')
+
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time()) - RETRY_PERIOD
+    message_info = 'Бот начал отслеживание домашних работ...'
+    message_empty = True
     error_empty = ''
-    message_empty = ''
+
     while True:
         try:
-            message_info = 'Бот начал отслеживание домашних работ...'
-            if message_empty != message_info:
+            if message_empty:
                 logger.debug(message_info)
                 send_message(bot, message_info)
-                message_empty = message_info
+                message_empty = False
             response = get_api_answer(timestamp)
             homework = check_response(response)
             timestamp = response.get('current_date')
@@ -145,8 +161,10 @@ def main():
                 logger.debug(message)
             else:
                 logger.debug('Новых статусов нет!')
-        except telegram.error.TelegramError:
-            logger.error('Ошибка при отправке сообщения в телеграм')
+        except TelegramMessageError as error:
+            logger.error(
+                f'Ошибка при отправке сообщения в телеграм: {error}'
+            )
         except Exception as error:
             message_error = f'Сбой в работе программы: {error}'
             logger.error(message_error)
@@ -164,4 +182,5 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
     handler.setFormatter(logging.Formatter(LOG_FORMAT))
     logger.addHandler(handler)
+
     main()
